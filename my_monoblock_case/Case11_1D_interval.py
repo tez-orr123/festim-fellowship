@@ -128,7 +128,10 @@ my_model.subdomains = all_subdomains
 
 # Now testing between trap density of (w_density*0.00118)/avo vs no /avo
 w_density = 6.3e28
-trap_density = (w_density * 0.00118)
+trap_density = (w_density * 0.00118) # required upping atol to 1e-8 
+# this new trap density and atol is showing much better results imo, 
+# So, going to commit and push this, then merge with main branch and say 1D test is done with
+# Then move to 3D case 11 with these parameters.
 
 Deuterium = F.Species("D", subdomains=my_model.volume_subdomains)
 trapped_D = F.Species("D_trapped", mobile=False, subdomains=my_model.volume_subdomains)
@@ -225,7 +228,7 @@ my_model.temperature = heat_transfer_problem.u
 # Settings
 my_model.settings = F.Settings(
     transient=True,
-    atol=1e-17, # lower tolerance if we solving in zero iterations
+    atol=1e-8, # lower tolerance if we solving in zero iterations
     rtol=1e-10,
     final_time=3.2e7,
 )
