@@ -128,7 +128,7 @@ my_model.subdomains = all_subdomains
 
 # Now testing between trap density of (w_density*0.00118)/avo vs no /avo
 w_density = 6.3e28
-trap_density = (w_density * 0.00118) / avo
+trap_density = (w_density * 0.00118)
 
 Deuterium = F.Species("D", subdomains=my_model.volume_subdomains)
 trapped_D = F.Species("D_trapped", mobile=False, subdomains=my_model.volume_subdomains)
