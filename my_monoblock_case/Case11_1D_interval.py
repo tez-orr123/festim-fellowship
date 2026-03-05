@@ -125,13 +125,21 @@ my_model.method_interface = "penalty"
 my_model.subdomains = all_subdomains
 
 # Species, try all explicit species
+
+# Now testing between trap density of (w_density*0.00118)/avo vs no /avo
+w_density = 6.3e28
+trap_density = (w_density * 0.00118) # required upping atol to 1e-8 
+# this new trap density and atol is showing much better results imo, 
+# So, going to commit and push this, then merge with main branch and say 1D test is done with
+# Then move to 3D case 11 with these parameters.
+
 Deuterium = F.Species("D", subdomains=my_model.volume_subdomains)
 trapped_D = F.Species("D_trapped", mobile=False, subdomains=my_model.volume_subdomains)
 Tritium = F.Species("T", subdomains=my_model.volume_subdomains)
 trapped_T = F.Species("T_trapped", mobile=False, subdomains=my_model.volume_subdomains)
 empty_traps = F.Species("empty_traps", mobile=False, subdomains=my_model.volume_subdomains)
 my_model.species = [Deuterium, Tritium, trapped_D, trapped_T, empty_traps]
-my_model.initial_conditions = [F.InitialConcentration(value = 1E10, volume = W_volume, species=empty_traps)]
+my_model.initial_conditions = [F.InitialConcentration(value = trap_density, volume = W_volume, species=empty_traps)]
 # w_density = 6.3e28 / avo
 # trap_density = 1e17
 # empty_traps = F.ImplicitSpecies(n = trap_density, others = [trapped_D, trapped_T])
@@ -154,7 +162,6 @@ my_model.surface_to_volume = {
     coolant_facing_side: CuCrZr_volume,
 }
 
-
 # Penalty #2
 penalty_term = 1e-5
 my_model.interfaces = [
@@ -173,8 +180,8 @@ my_model.reactions = [
         product=[trapped_D],
         k_0=((W_D_0_D/((lattice_length)**2 * n_solute_per_site))/avo), # trapping pre-exponential factor k_0 = (1/6) * 1e13 / rho <- from sanjeet task
         E_k=0.265, # trapping activation energy
-        p_0=1.2397e11, # detrapping pre-exponential factor
-        E_p = 1.3, # detrapping activation energy, p = p_0 exp( - E_p/kT )
+        p_0=1.2397e13, # detrapping pre-exponential factor
+        E_p = 0.83, # detrapping activation energy, p = p_0 exp( - E_p/kT )
         volume=W_volume,
     ),
     F.Reaction(
@@ -182,8 +189,8 @@ my_model.reactions = [
         product=[trapped_T],
         k_0=(((W_D_0_T)/((lattice_length)**2 * n_solute_per_site))/avo), # trapping pre-exponential factor k_0 = (1/6) * 1e13 / rho <- from sanjeet task
         E_k=0.265, # trapping activation energy
-        p_0=1.2397e11, # detrapping pre-exponential factor
-        E_p = 1.3, # detrapping activation energy, p = p_0 exp( - E_p/kT )
+        p_0=1.2397e13, # detrapping pre-exponential factor
+        E_p = 0.83, # detrapping activation energy, p = p_0 exp( - E_p/kT )
         volume=W_volume,
     ),
 ]
@@ -221,7 +228,7 @@ my_model.temperature = heat_transfer_problem.u
 # Settings
 my_model.settings = F.Settings(
     transient=True,
-    atol=1e-17, # lower tolerance if we solving in zero iterations
+    atol=1e-8, # lower tolerance if we solving in zero iterations
     rtol=1e-10,
     final_time=3.2e7,
 )
