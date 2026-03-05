@@ -172,8 +172,8 @@ my_model.reactions = [
         product=[trapped_D],
         # the test will be k_0 being 1e13 and then 1e-10
         # doesn't run with 1e13, mumps solver crashes
-        k_0=1e-10,
-        #k_0=((W_D_0_D/((lattice_length)**2 * n_solute_per_site))/avo), # trapping pre-exponential factor k_0 = (1/6) * 1e13 / rho <- from sanjeet task
+        # Conclusion is, yes clearly 1e-10 is the better option, so keeping my k_0 equation with avo
+        k_0=((W_D_0_D/((lattice_length)**2 * n_solute_per_site))/avo), # trapping pre-exponential factor k_0 = (1/6) * 1e13 / rho <- from sanjeet task
         E_k=0.265, # trapping activation energy
         p_0=1.2397e13, # detrapping pre-exponential factor
         E_p = 0.83, # detrapping activation energy, p = p_0 exp( - E_p/kT )
@@ -182,8 +182,7 @@ my_model.reactions = [
     F.Reaction(
         reactant=[Tritium, empty_traps],
         product=[trapped_T],
-        k_0=1e-10,
-        #k_0=(((W_D_0_T)/((lattice_length)**2 * n_solute_per_site))/avo), # trapping pre-exponential factor k_0 = (1/6) * 1e13 / rho <- from sanjeet task
+        k_0=(((W_D_0_T)/((lattice_length)**2 * n_solute_per_site))/avo), # trapping pre-exponential factor k_0 = (1/6) * 1e13 / rho <- from sanjeet task
         E_k=0.265, # trapping activation energy
         p_0=1.2397e13, # detrapping pre-exponential factor
         E_p = 0.83, # detrapping activation energy, p = p_0 exp( - E_p/kT )
