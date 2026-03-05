@@ -154,7 +154,6 @@ my_model.surface_to_volume = {
     coolant_facing_side: CuCrZr_volume,
 }
 
-
 # Penalty #2
 penalty_term = 1e-5
 my_model.interfaces = [
@@ -171,19 +170,22 @@ my_model.reactions = [
     F.Reaction(
         reactant=[Deuterium, empty_traps],
         product=[trapped_D],
-        k_0=((W_D_0_D/((lattice_length)**2 * n_solute_per_site))/avo), # trapping pre-exponential factor k_0 = (1/6) * 1e13 / rho <- from sanjeet task
+        # the test will be k_0 being 1e13 and then 1e-10
+        k_0=1e13,
+        #k_0=((W_D_0_D/((lattice_length)**2 * n_solute_per_site))/avo), # trapping pre-exponential factor k_0 = (1/6) * 1e13 / rho <- from sanjeet task
         E_k=0.265, # trapping activation energy
-        p_0=1.2397e11, # detrapping pre-exponential factor
-        E_p = 1.3, # detrapping activation energy, p = p_0 exp( - E_p/kT )
+        p_0=1.2397e13, # detrapping pre-exponential factor
+        E_p = 0.83, # detrapping activation energy, p = p_0 exp( - E_p/kT )
         volume=W_volume,
     ),
     F.Reaction(
         reactant=[Tritium, empty_traps],
         product=[trapped_T],
-        k_0=(((W_D_0_T)/((lattice_length)**2 * n_solute_per_site))/avo), # trapping pre-exponential factor k_0 = (1/6) * 1e13 / rho <- from sanjeet task
+        k_0=1e13,
+        #k_0=(((W_D_0_T)/((lattice_length)**2 * n_solute_per_site))/avo), # trapping pre-exponential factor k_0 = (1/6) * 1e13 / rho <- from sanjeet task
         E_k=0.265, # trapping activation energy
-        p_0=1.2397e11, # detrapping pre-exponential factor
-        E_p = 1.3, # detrapping activation energy, p = p_0 exp( - E_p/kT )
+        p_0=1.2397e13, # detrapping pre-exponential factor
+        E_p = 0.83, # detrapping activation energy, p = p_0 exp( - E_p/kT )
         volume=W_volume,
     ),
 ]
