@@ -3,6 +3,7 @@ monoblock_exports/
 out.bp/
 SALOME_meshes
 
+*.bp
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
