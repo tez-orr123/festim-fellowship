@@ -125,13 +125,18 @@ my_model.method_interface = "penalty"
 my_model.subdomains = all_subdomains
 
 # Species, try all explicit species
+
+# Now testing between trap density of (w_density*0.00118)/avo vs no /avo
+w_density = 6.3e28
+trap_density = (w_density * 0.00118) / avo
+
 Deuterium = F.Species("D", subdomains=my_model.volume_subdomains)
 trapped_D = F.Species("D_trapped", mobile=False, subdomains=my_model.volume_subdomains)
 Tritium = F.Species("T", subdomains=my_model.volume_subdomains)
 trapped_T = F.Species("T_trapped", mobile=False, subdomains=my_model.volume_subdomains)
 empty_traps = F.Species("empty_traps", mobile=False, subdomains=my_model.volume_subdomains)
 my_model.species = [Deuterium, Tritium, trapped_D, trapped_T, empty_traps]
-my_model.initial_conditions = [F.InitialConcentration(value = 1E10, volume = W_volume, species=empty_traps)]
+my_model.initial_conditions = [F.InitialConcentration(value = trap_density, volume = W_volume, species=empty_traps)]
 # w_density = 6.3e28 / avo
 # trap_density = 1e17
 # empty_traps = F.ImplicitSpecies(n = trap_density, others = [trapped_D, trapped_T])
@@ -170,9 +175,6 @@ my_model.reactions = [
     F.Reaction(
         reactant=[Deuterium, empty_traps],
         product=[trapped_D],
-        # the test will be k_0 being 1e13 and then 1e-10
-        # doesn't run with 1e13, mumps solver crashes
-        # Conclusion is, yes clearly 1e-10 is the better option, so keeping my k_0 equation with avo
         k_0=((W_D_0_D/((lattice_length)**2 * n_solute_per_site))/avo), # trapping pre-exponential factor k_0 = (1/6) * 1e13 / rho <- from sanjeet task
         E_k=0.265, # trapping activation energy
         p_0=1.2397e13, # detrapping pre-exponential factor
