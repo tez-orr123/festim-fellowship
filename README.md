@@ -10,3 +10,23 @@ FESTIM_2torial = scripts from going through the FESTIM 2 tutorial
 my_monoblock_case = currently working on this, scripts of my developing monoblock case in FESTIM 2
 
 Gone.
+
+## How to run
+
+Create the conda environment (needs to [install conda](https://www.anaconda.com/docs/getting-started/miniconda/install#linux-2))
+
+```
+conda env create -f environment.yml
+```
+
+Activate your environment:
+
+```
+conda activate festim-fellowship
+```
+
+Test:
+
+```
+python -c "import festim"
+```
