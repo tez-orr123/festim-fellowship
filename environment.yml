@@ -1,0 +1,12 @@
+name: festim-fellowship
+
+channels:
+- defaults
+- conda-forge
+
+dependencies:
+- festim
+- python-gmsh
+- pyvista
+- numpy
+# - ipykernel   # if you run notebooks you'll probably need this
