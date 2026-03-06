@@ -65,7 +65,7 @@ cucrzr = F.Material(
 
 
 # Define mesh from xdmf files
-mesh = F.MeshFromXDMF("SALOME_meshes/my_monoblock_mesh_domains.xdmf", "SALOME_meshes/my_monoblock_mesh_boundaries.xdmf")
+mesh = F.MeshFromXDMF("SALOME_meshes/monoblock_mesh_domains.xdmf", "SALOME_meshes/monoblock_mesh_boundaries.xdmf")
 
 mesh.mesh.geometry.x[:] *= 1e-3
 # -------------------------------------------------
@@ -139,9 +139,10 @@ trapped_D = F.Species("D_trapped", mobile=False, subdomains=my_model.volume_subd
 Tritium = F.Species("T", subdomains=my_model.volume_subdomains)
 trapped_T = F.Species("T_trapped", mobile=False, subdomains=my_model.volume_subdomains)
 w_density = 6.3e28 / avo
-trap_density = 1e25 / avo
-empty_trap = F.ImplicitSpecies(n = trap_density, others = [trapped_D, trapped_T])
-my_model.species = [Deuterium, trapped_D, Tritium, trapped_T]
+trap_density = (w_density * 0.00118)
+empty_traps = F.Species("empty_traps", mobile=False, subdomains=my_model.volume_subdomains)
+my_model.species = [Deuterium, trapped_D, Tritium, trapped_T, empty_traps]
+my_model.initial_conditions = [F.InitialConcentration(value=trap_density, volume=W_volume, species=empty_traps)]
 
 my_model.mesh = mesh
 
@@ -166,7 +167,7 @@ lattice_length = 1.1e-10  # m
 n_solute_per_site = 6
 my_model.reactions = [
     F.Reaction(
-        reactant=[Deuterium, empty_trap],
+        reactant=[Deuterium, empty_traps],
         product=[trapped_D],
         k_0=((W_D_0_D/((lattice_length)**2 * n_solute_per_site))/avo), # trapping pre-exponential factor k_0 = (1/6) * 1e13 / rho <- from sanjeet task
         E_k=0.265, # trapping activation energy
@@ -175,7 +176,7 @@ my_model.reactions = [
         volume=W_volume,
     ),
     F.Reaction(
-        reactant=[Tritium, empty_trap],
+        reactant=[Tritium, empty_traps],
         product=[trapped_T],
         k_0=(((W_D_0_T)/((lattice_length)**2 * n_solute_per_site))/avo), # trapping pre-exponential factor k_0 = (1/6) * 1e13 / rho <- from sanjeet task
         E_k=0.265, # trapping activation energy
@@ -216,7 +217,7 @@ my_model.temperature = heat_transfer_problem.u # Should take the temperature fro
 #This transient but temp not, will it mansion
 my_model.settings = F.Settings(
     transient=True,
-    atol=1e-20, # lower tolerance if we solving in zero iterations
+    atol=1e-8, # lower tolerance if we solving in zero iterations
     rtol=1e-10,
     final_time=3.2e7,
 )
