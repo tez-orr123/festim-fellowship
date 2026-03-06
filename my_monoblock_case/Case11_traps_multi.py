@@ -294,3 +294,5 @@ else:
 # WILL try and get single species trap case with heat transfer
 # problem running first and then try the multi species way.
 
+# slow at first but did indeed run, just pyvista that didn't want
+# to run as there's no notebook package
