@@ -134,10 +134,12 @@ my_model.subdomains = all_subdomains
 
 # Now testing between trap density of (w_density*0.00118)/avo vs no /avo
 w_density = 6.3e28
-trap_density = (w_density * 0.00118) # required upping atol to 1e-8 
-# this new trap density and atol is showing much better results imo, 
-# So, going to commit and push this, then merge with main branch and say 1D test is done with
-# Then move to 3D case 11 with these parameters.
+copper_density = 9.2e28
+
+W_trap_density = (w_density * 0.00118)
+Cu_trap_density = (copper_density * 0.00005)
+CuCrZr_trap_density = 3.7e24
+
 
 Deuterium = F.Species("D", subdomains=my_model.volume_subdomains)
 trapped_D = F.Species("D_trapped", mobile=False, subdomains=my_model.volume_subdomains)
@@ -149,9 +151,9 @@ empty_CuCrZr_trap = F.Species("empty_CuCrZr_trap", mobile=False, subdomains=my_m
 my_model.species = [Deuterium, Tritium, trapped_D, trapped_T, empty_W_trap, empty_Cu_trap, empty_CuCrZr_trap]
 
 my_model.initial_conditions = [
-    F.InitialConcentration(value=trap_density, volume=W_volume, species=empty_W_trap),
-    F.InitialConcentration(value=trap_density, volume=Cu_volume, species=empty_Cu_trap),
-    F.InitialConcentration(value=trap_density, volume=CuCrZr_volume, species=empty_CuCrZr_trap)
+    F.InitialConcentration(value=W_trap_density, volume=W_volume, species=empty_W_trap),
+    F.InitialConcentration(value=Cu_trap_density, volume=Cu_volume, species=empty_Cu_trap),
+    F.InitialConcentration(value=CuCrZr_trap_density, volume=CuCrZr_volume, species=empty_CuCrZr_trap)
                                ]
 # w_density = 6.3e28 / avo
 # trap_density = 1e17
