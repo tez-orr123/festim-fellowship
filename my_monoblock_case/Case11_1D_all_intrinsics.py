@@ -136,7 +136,7 @@ my_model.subdomains = all_subdomains
 w_density = 6.3e28
 copper_density = 9.2e28
 
-W_trap_density = (w_density * 0.00118)
+W_trap_density = (w_density * 0.00118) 
 Cu_trap_density = (copper_density * 0.00005)
 CuCrZr_trap_density = 3.7e24
 
@@ -196,7 +196,7 @@ my_model.reactions = [ # Added additional traps but they are showing as negative
     F.Reaction(
         reactant=[Deuterium, empty_W_trap],
         product=[trapped_D],
-        k_0=((W_D_0_D/((lattice_length_W)**2 * n_solute_per_site_W))/avo), # trapping pre-exponential factor k_0 = (1/6) * 1e13 / rho <- from sanjeet task
+        k_0=((W_D_0_D/((lattice_length_W)**2 * n_solute_per_site_W)*w_density)/avo), # trapping pre-exponential factor k_0 = (1/6) * 1e13 / rho <- from sanjeet task
         E_k=0.265, # trapping activation energy
         p_0=1.2397e13, # detrapping pre-exponential factor
         E_p = 0.83, # detrapping activation energy, p = p_0 exp( - E_p/kT )
@@ -205,7 +205,7 @@ my_model.reactions = [ # Added additional traps but they are showing as negative
     F.Reaction(
         reactant=[Tritium, empty_W_trap],
         product=[trapped_T],
-        k_0=(((W_D_0_T)/((lattice_length_W)**2 * n_solute_per_site_W))/avo), # trapping pre-exponential factor k_0 = (1/6) * 1e13 / rho <- from sanjeet task
+        k_0=(((W_D_0_T)/((lattice_length_W)**2 * n_solute_per_site_W)*w_density)/avo), # trapping pre-exponential factor k_0 = (1/6) * 1e13 / rho <- from sanjeet task
         E_k=0.265, # trapping activation energy
         p_0=1.2397e13, # detrapping pre-exponential factor
         E_p = 0.83, # detrapping activation energy, p = p_0 exp( - E_p/kT )
@@ -214,7 +214,7 @@ my_model.reactions = [ # Added additional traps but they are showing as negative
     F.Reaction(
         reactant=[Deuterium, empty_Cu_trap],
         product=[trapped_D],
-        k_0=((Cu_D_0_D/((lattice_length_Cu)**2 * n_solute_per_site_Cu))/avo), # trapping pre-exponential factor k_0 = (1/6) * 1e13 / rho <- from sanjeet task
+        k_0=((Cu_D_0_D/((lattice_length_Cu)**2 * n_solute_per_site_Cu)*copper_density)/avo), # trapping pre-exponential factor k_0 = (1/6) * 1e13 / rho <- from sanjeet task
         E_k=0.387, # trapping activation energy
         p_0=5.0926e12, # detrapping pre-exponential factor
         E_p = 0.5, # detrapping activation energy, p = p_0 exp( - E_p/kT )
@@ -223,7 +223,7 @@ my_model.reactions = [ # Added additional traps but they are showing as negative
     F.Reaction(
         reactant=[Tritium, empty_W_trap],
         product=[trapped_T],
-        k_0=(((Cu_D_0_T)/((lattice_length_Cu)**2 * n_solute_per_site_Cu))/avo), # trapping pre-exponential factor k_0 = (1/6) * 1e13 / rho <- from sanjeet task
+        k_0=(((Cu_D_0_T)/((lattice_length_Cu)**2 * n_solute_per_site_Cu)*copper_density)/avo), # trapping pre-exponential factor k_0 = (1/6) * 1e13 / rho <- from sanjeet task
         E_k=0.387, # trapping activation energy
         p_0=5.0926e12, # detrapping pre-exponential factor
         E_p = 0.5, # detrapping activation energy, p = p_0 exp( - E_p/kT )
@@ -232,7 +232,7 @@ my_model.reactions = [ # Added additional traps but they are showing as negative
     F.Reaction(
         reactant=[Deuterium, empty_CuCrZr_trap],
         product=[trapped_D],
-        k_0=((CuCrZr_D_0_D/((lattice_length_Cu)**2 * n_solute_per_site_Cu))/avo), # trapping pre-exponential factor k_0 = (1/6) * 1e13 / rho <- from sanjeet task
+        k_0=((CuCrZr_D_0_D/((lattice_length_Cu)**2 * n_solute_per_site_Cu)*copper_density)/avo), # trapping pre-exponential factor k_0 = (1/6) * 1e13 / rho <- from sanjeet task
         E_k=0.418, # trapping activation energy
         p_0=7.3472e12, # detrapping pre-exponential factor
         E_p = 0.53, # detrapping activation energy, p = p_0 exp( - E_p/kT )
@@ -241,7 +241,7 @@ my_model.reactions = [ # Added additional traps but they are showing as negative
     F.Reaction(
         reactant=[Tritium, empty_W_trap],
         product=[trapped_T],
-        k_0=(((CuCrZr_D_0_T)/((lattice_length_Cu)**2 * n_solute_per_site_Cu))/avo), # trapping pre-exponential factor k_0 = (1/6) * 1e13 / rho <- from sanjeet task
+        k_0=(((CuCrZr_D_0_T)/((lattice_length_Cu)**2 * n_solute_per_site_Cu)*copper_density)/avo), # trapping pre-exponential factor k_0 = (1/6) * 1e13 / rho <- from sanjeet task
         E_k=0.418, # trapping activation energy
         p_0=7.3472e12, # detrapping pre-exponential factor
         E_p = 0.53, # detrapping activation energy, p = p_0 exp( - E_p/kT )
@@ -282,7 +282,7 @@ my_model.temperature = heat_transfer_problem.u
 # Settings
 my_model.settings = F.Settings(
     transient=True,
-    atol=1e-8, # lower tolerance if we solving in zero iterations
+    atol=1e16, # lower tolerance if we solving in zero iterations
     rtol=1e-10,
     final_time=3.2e7,
 )
