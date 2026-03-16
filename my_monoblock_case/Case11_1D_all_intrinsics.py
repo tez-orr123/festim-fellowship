@@ -282,12 +282,12 @@ my_model.temperature = heat_transfer_problem.u
 # Settings
 my_model.settings = F.Settings(
     transient=True,
-    atol=1e16, # lower tolerance if we solving in zero iterations
+    atol=1e19, # lower tolerance if we solving in zero iterations
     rtol=1e-10,
     final_time=3.2e7,
 )
 my_model.settings.stepsize = F.Stepsize(
-    initial_value=1e6,
+    initial_value=1e3,
     growth_factor=1.1,
     cutback_factor=0.9,
     target_nb_iterations=4,
