@@ -171,7 +171,7 @@ my_model.interfaces = [
     F.Interface(id=12, subdomains=(Cu_volume, CuCrZr_volume), penalty_term=penalty_term)
 ]
 
-# Trapping reactions
+#Trapping reactions
 lattice_length = 1.1e-10  # m
 n_solute_per_site = 6
 my_model.reactions = [
@@ -197,7 +197,7 @@ my_model.reactions = [
 
 # BCs
 import ufl
-phi = ((0.23e24) / 2)/avo
+phi = ((0.23e24) / 2) /avo
 R_p = 1.1e-9 
 my_model.boundary_conditions = [
     F.FixedConcentrationBC(
@@ -228,7 +228,7 @@ my_model.temperature = heat_transfer_problem.u
 # Settings
 my_model.settings = F.Settings(
     transient=True,
-    atol=1e-8, # lower tolerance if we solving in zero iterations
+    atol=1e6, # lower tolerance if we solving in zero iterations
     rtol=1e-10,
     final_time=3.2e7,
 )
@@ -256,4 +256,19 @@ my_model.run()
 
 
 
-# BASBDHASBDN
+# Mission: Get my concentration back
+# first try not /avo ing the phi value
+# IM TAKING THE TRAPS AWAY AND SEEING IF IT STILL WORKS, returning /avo to phi
+# okay SO, with no trapping reactions, D_6 concentration shows as 2.2E-2 and a nice gradient all cool
+# ofc, trapped D_6 concentration shows as 1.2E-38 so basically 0 which is expected 
+# BUT that is the value I keep getting for EVERYTHING when I run it with trapping reactions.
+
+# Let's just put in the deuterium trap first...
+# That was such the right move it's insane.
+# SO with just the deuterium trapping reaction, get nice value of 2.2E-2 D mobile and 3.3E+2 trapped D--- that's really high but
+# it works okay
+
+# Now let's add the tritium trapping reaction....
+# I'm gonna do it this time--- so it seems I jsut set my tolerances so naffly that it didn't wanna compute anything
+# My trapped concentrations are still WEIRDLY HIGH but you know this could be an issue with the values I'm using
+# since they are practically made it.
