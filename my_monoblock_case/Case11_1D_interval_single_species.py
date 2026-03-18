@@ -21,24 +21,24 @@ CuCrZr_E_D_D = 0.408
 CuCrZr_E_D_T = 0.418
 
 tungsten = F.Material(
-    D_0={"D": float(W_D_0_D), "T": (W_D_0_T)},
-    E_D={"D": float(W_E_D_D), "T": (W_E_D_T)}, 
+    D_0=(W_D_0_D),
+    E_D=(W_E_D_D),
     K_S_0=1.87e24 / avo,
     E_K_S=1.04,
     thermal_conductivity=100,
 )
 
 copper = F.Material(
-    D_0={"D": float(Cu_D_0_D), "T": (Cu_D_0_T)},
-    E_D={"D": float(Cu_E_D_D), "T": (Cu_E_D_T)},
+    D_0=(Cu_D_0_D),
+    E_D=(Cu_E_D_D), 
     K_S_0=3.14e24 / avo,
     E_K_S=0.572,
     thermal_conductivity=350,
 )
 
 cucrzr = F.Material(
-    D_0={"D": float(CuCrZr_D_0_D), "T": (CuCrZr_D_0_T)},
-    E_D={"D": float(CuCrZr_E_D_D), "T": (CuCrZr_E_D_T)},
+    D_0=(CuCrZr_D_0_D),
+    E_D=(CuCrZr_E_D_D),
     K_S_0=4.28e23 / avo, 
     E_K_S=0.387, 
     thermal_conductivity=350,
@@ -124,31 +124,17 @@ my_model.method_interface = "penalty"
 # Subdomains
 my_model.subdomains = all_subdomains
 
-# Species, try all explicit species
-
-# Now testing between trap density of (w_density*0.00118)/avo vs no /avo
 w_density = 6.3e28
-trap_density = (w_density * 0.00118) /avo # required upping atol to 1e-8 
-# this new trap density and atol is showing much better results imo, 
-# So, going to commit and push this, then merge with main branch and say 1D test is done with
-# Then move to 3D case 11 with these parameters.
+trap_density = (w_density * 0.00118) /avo 
+
+
 
 Deuterium = F.Species("D", subdomains=my_model.volume_subdomains)
 trapped_D = F.Species("D_trapped", mobile=False, subdomains=my_model.volume_subdomains)
-Tritium = F.Species("T", subdomains=my_model.volume_subdomains)
-trapped_T = F.Species("T_trapped", mobile=False, subdomains=my_model.volume_subdomains)
 empty_traps = F.Species("empty_traps", mobile=False, subdomains=my_model.volume_subdomains)
-my_model.species = [Deuterium, Tritium, trapped_D, trapped_T, empty_traps]
+my_model.species = [Deuterium, trapped_D, empty_traps]
 my_model.initial_conditions = [F.InitialConcentration(value = trap_density, volume = W_volume, species=empty_traps)]
-# w_density = 6.3e28 / avo
-# trap_density = 1e17
-# empty_traps = F.ImplicitSpecies(n = trap_density, others = [trapped_D, trapped_T])
-# my_model.species = [Deuterium, trapped_D, Tritium, trapped_T]
-# So implicit species of empty traps results in error of:
-# ValueError: Cannot compute concentration of None because T_trapped has no solution.
 
-# But produces good results when empty_traps is an explicit species
-# Which is preferred?
 
 # Subdomains
 my_model.subdomains = all_subdomains
@@ -181,16 +167,7 @@ my_model.reactions = [
         k_0=((W_D_0_D/((lattice_length)**2 * n_solute_per_site))/avo), # trapping pre-exponential factor k_0 = (1/6) * 1e13 / rho <- from sanjeet task
         E_k=0.265, # trapping activation energy
         p_0=1.2397e13, # detrapping pre-exponential factor
-        E_p = 0.83, # detrapping activation energy, p = p_0 exp( - E_p/kT )
-        volume=W_volume,
-    ),
-    F.Reaction(
-        reactant=[Tritium, empty_traps],
-        product=[trapped_T],
-        k_0=(((W_D_0_T)/((lattice_length)**2 * n_solute_per_site))/avo), # trapping pre-exponential factor k_0 = (1/6) * 1e13 / rho <- from sanjeet task
-        E_k=0.265, # trapping activation energy
-        p_0=1.2397e13, # detrapping pre-exponential factor
-        E_p = 0.83, # detrapping activation energy, p = p_0 exp( - E_p/kT )
+        E_p = 1.3, # detrapping activation energy, p = p_0 exp( - E_p/kT )
         volume=W_volume,
     ),
 ]
@@ -209,16 +186,6 @@ my_model.boundary_conditions = [
         subdomain=coolant_facing_side, 
         value=0, 
         species=Deuterium
-    ),
-    F.FixedConcentrationBC(
-        subdomain=plasma_facing_side,
-        value=lambda T: phi * R_p / (W_D_0_T * ufl.exp(-W_E_D_T / F.k_B / T)),
-        species=Tritium
-    ),
-    F.FixedConcentrationBC(
-        subdomain=coolant_facing_side, 
-        value=0, 
-        species=Tritium
     ),
 ]
 
