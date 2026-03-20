@@ -179,6 +179,7 @@ trapped_2H = F.Species("2H_trapped", mobile=False, subdomains=my_model.volume_su
 trapped_3H =F.Species("3H_trapped", mobile=False, subdomains=my_model.volume_subdomains)
 empty_traps = F.Species("empty_traps", mobile=False, subdomains=my_model.volume_subdomains)
 
+
 my_model.species = [mobile_H, trapped_1H, trapped_2H, trapped_3H, empty_traps]
 
 # Densities of traps:
@@ -320,11 +321,19 @@ my_model.settings.stepsize = F.Stepsize(
 )
 
 # Exports
+
+
 my_model.exports = [
         F.VTXSpeciesExport(filename=f"monoblock_exports/multi_occupancy/{spe.name}_{subdomain.id}.bp", field=spe, subdomain=subdomain)
         for spe in my_model.species
         for subdomain in my_model.volume_subdomains
-        ]
+]
+# Trying to export all three trap concentration in one file...
+total_trapped = [trapped_1H, trapped_2H, trapped_3H]
+my_model.exports = [
+        F.VTXSpeciesExport(filename=f"monoblock_exports/multi_occupancy/total_trapped.bp", field=total_trapped, subdomain=W_volume)
+]
+
 
 # SHOW THAT LOG
 from dolfinx.log import LogLevel, set_log_level
