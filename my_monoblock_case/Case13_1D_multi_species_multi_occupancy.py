@@ -200,7 +200,7 @@ my_model.initial_conditions = [F.InitialConcentration(value = trap_density, volu
 # Densities of traps:
 # Empty traps density will be density of trap 1 = metal_density * 0.01 * 6/21
 # we will have to divide these of old by avo
-W_density = 6.3e28
+# W_density = 6.3e28
 
 # empty_traps_density = (W_density * 0.01 * 6/6) / avo
 # trapped_1D_density =  (W_density * 0.01 * 12/6) /avo
@@ -208,7 +208,6 @@ W_density = 6.3e28
 # trapped_1T_density =  (W_density * 0.01 * 12/6) /avo
 # trapped_2T_density = (W_density * 0.01 * 18/6) /avo
 # trapped_DT_density =  (W_density * 0.01 * 12/6) /avo
-
 
 # Mesh
 my_model.mesh = shared_mesh
@@ -359,7 +358,6 @@ my_model.settings.stepsize = F.Stepsize(
 )
 
 # Exports
-
 my_model.exports = [
         F.VTXSpeciesExport(filename=f"monoblock_exports/multi_occupancy/{spe.name}_{subdomain.id}.bp", field=spe, subdomain=subdomain)
         for spe in my_model.species
