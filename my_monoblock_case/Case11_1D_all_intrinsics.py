@@ -1,3 +1,9 @@
+# Case 11
+# Adding more traps gradually
+# Here we will have the intrinsic traps in copper and cucrzr
+
+
+
 import festim as F
 import numpy as np
 
@@ -105,8 +111,8 @@ heat_transfer_problem.boundary_conditions = [
 heat_transfer_problem.exports = [F.VTXTemperatureExport("monoblock_exports/temp.bp")]
 
 heat_transfer_problem.settings = F.Settings(
-    atol=1e-8,
-    rtol=1e-8,
+    atol=1e-10,
+    rtol=1e-10,
     transient=False,
 )
 
@@ -128,18 +134,27 @@ my_model.subdomains = all_subdomains
 
 # Now testing between trap density of (w_density*0.00118)/avo vs no /avo
 w_density = 6.3e28
-trap_density = (w_density * 0.00118) /avo # required upping atol to 1e-8 
-# this new trap density and atol is showing much better results imo, 
-# So, going to commit and push this, then merge with main branch and say 1D test is done with
-# Then move to 3D case 11 with these parameters.
+copper_density = 9.2e28
+
+W_trap_density = (w_density * 0.00118) 
+Cu_trap_density = (copper_density * 0.00005)
+CuCrZr_trap_density = 3.7e24
+
 
 Deuterium = F.Species("D", subdomains=my_model.volume_subdomains)
 trapped_D = F.Species("D_trapped", mobile=False, subdomains=my_model.volume_subdomains)
 Tritium = F.Species("T", subdomains=my_model.volume_subdomains)
 trapped_T = F.Species("T_trapped", mobile=False, subdomains=my_model.volume_subdomains)
-empty_traps = F.Species("empty_traps", mobile=False, subdomains=my_model.volume_subdomains)
-my_model.species = [Deuterium, Tritium, trapped_D, trapped_T, empty_traps]
-my_model.initial_conditions = [F.InitialConcentration(value = trap_density, volume = W_volume, species=empty_traps)]
+empty_W_trap = F.Species("empty_W_trap", mobile=False, subdomains=my_model.volume_subdomains)
+empty_Cu_trap = F.Species("empty_Cu_trap", mobile=False, subdomains=my_model.volume_subdomains)
+empty_CuCrZr_trap = F.Species("empty_CuCrZr_trap", mobile=False, subdomains=my_model.volume_subdomains)
+my_model.species = [Deuterium, Tritium, trapped_D, trapped_T, empty_W_trap, empty_Cu_trap, empty_CuCrZr_trap]
+
+my_model.initial_conditions = [
+    F.InitialConcentration(value=W_trap_density, volume=W_volume, species=empty_W_trap),
+    F.InitialConcentration(value=Cu_trap_density, volume=Cu_volume, species=empty_Cu_trap),
+    F.InitialConcentration(value=CuCrZr_trap_density, volume=CuCrZr_volume, species=empty_CuCrZr_trap)
+                               ]
 # w_density = 6.3e28 / avo
 # trap_density = 1e17
 # empty_traps = F.ImplicitSpecies(n = trap_density, others = [trapped_D, trapped_T])
@@ -171,33 +186,72 @@ my_model.interfaces = [
     F.Interface(id=12, subdomains=(Cu_volume, CuCrZr_volume), penalty_term=penalty_term)
 ]
 
-#Trapping reactions
-lattice_length = 1.1e-10  # m
-n_solute_per_site = 6
-my_model.reactions = [
+# Trapping reactions
+lattice_length_W = 1.1e-10  # m
+n_solute_per_site_W = 6
+lattice_length_Cu = 3.6e-10
+n_solute_per_site_Cu = 1
+
+my_model.reactions = [ # Added additional traps but they are showing as negative values, not quite right yet
     F.Reaction(
-        reactant=[Deuterium, empty_traps],
+        reactant=[Deuterium, empty_W_trap],
         product=[trapped_D],
-        k_0=((W_D_0_D/((lattice_length)**2 * n_solute_per_site))/avo), # trapping pre-exponential factor k_0 = (1/6) * 1e13 / rho <- from sanjeet task
+        k_0=((W_D_0_D/((lattice_length_W)**2 * n_solute_per_site_W)*w_density)/avo), # trapping pre-exponential factor k_0 = (1/6) * 1e13 / rho <- from sanjeet task
         E_k=0.265, # trapping activation energy
         p_0=1.2397e13, # detrapping pre-exponential factor
         E_p = 0.83, # detrapping activation energy, p = p_0 exp( - E_p/kT )
         volume=W_volume,
     ),
     F.Reaction(
-        reactant=[Tritium, empty_traps],
+        reactant=[Tritium, empty_W_trap],
         product=[trapped_T],
-        k_0=(((W_D_0_T)/((lattice_length)**2 * n_solute_per_site))/avo), # trapping pre-exponential factor k_0 = (1/6) * 1e13 / rho <- from sanjeet task
+        k_0=(((W_D_0_T)/((lattice_length_W)**2 * n_solute_per_site_W)*w_density)/avo), # trapping pre-exponential factor k_0 = (1/6) * 1e13 / rho <- from sanjeet task
         E_k=0.265, # trapping activation energy
         p_0=1.2397e13, # detrapping pre-exponential factor
         E_p = 0.83, # detrapping activation energy, p = p_0 exp( - E_p/kT )
         volume=W_volume,
+    ),
+    F.Reaction(
+        reactant=[Deuterium, empty_Cu_trap],
+        product=[trapped_D],
+        k_0=((Cu_D_0_D/((lattice_length_Cu)**2 * n_solute_per_site_Cu)*copper_density)/avo), # trapping pre-exponential factor k_0 = (1/6) * 1e13 / rho <- from sanjeet task
+        E_k=0.387, # trapping activation energy
+        p_0=5.0926e12, # detrapping pre-exponential factor
+        E_p = 0.5, # detrapping activation energy, p = p_0 exp( - E_p/kT )
+        volume=Cu_volume,
+    ),
+    F.Reaction(
+        reactant=[Tritium, empty_W_trap],
+        product=[trapped_T],
+        k_0=(((Cu_D_0_T)/((lattice_length_Cu)**2 * n_solute_per_site_Cu)*copper_density)/avo), # trapping pre-exponential factor k_0 = (1/6) * 1e13 / rho <- from sanjeet task
+        E_k=0.387, # trapping activation energy
+        p_0=5.0926e12, # detrapping pre-exponential factor
+        E_p = 0.5, # detrapping activation energy, p = p_0 exp( - E_p/kT )
+        volume=Cu_volume,
+    ),
+    F.Reaction(
+        reactant=[Deuterium, empty_CuCrZr_trap],
+        product=[trapped_D],
+        k_0=((CuCrZr_D_0_D/((lattice_length_Cu)**2 * n_solute_per_site_Cu)*copper_density)/avo), # trapping pre-exponential factor k_0 = (1/6) * 1e13 / rho <- from sanjeet task
+        E_k=0.418, # trapping activation energy
+        p_0=7.3472e12, # detrapping pre-exponential factor
+        E_p = 0.53, # detrapping activation energy, p = p_0 exp( - E_p/kT )
+        volume=CuCrZr_volume,
+    ),
+    F.Reaction(
+        reactant=[Tritium, empty_W_trap],
+        product=[trapped_T],
+        k_0=(((CuCrZr_D_0_T)/((lattice_length_Cu)**2 * n_solute_per_site_Cu)*copper_density)/avo), # trapping pre-exponential factor k_0 = (1/6) * 1e13 / rho <- from sanjeet task
+        E_k=0.418, # trapping activation energy
+        p_0=7.3472e12, # detrapping pre-exponential factor
+        E_p = 0.53, # detrapping activation energy, p = p_0 exp( - E_p/kT )
+        volume=CuCrZr_volume,
     ),
 ]
 
 # BCs
 import ufl
-phi = ((0.23e24) / 2) /avo
+phi = ((0.23e24) / 2)/avo
 R_p = 1.1e-9 
 my_model.boundary_conditions = [
     F.FixedConcentrationBC(
@@ -228,13 +282,13 @@ my_model.temperature = heat_transfer_problem.u
 # Settings
 my_model.settings = F.Settings(
     transient=True,
-    atol=1e-20, # lower tolerance if we solving in zero iterations
+    atol=1e19, # lower tolerance if we solving in zero iterations
     rtol=1e-10,
     final_time=3.2e7,
 )
 my_model.settings.stepsize = F.Stepsize(
-    initial_value=1e2,
-    growth_factor=1.1, 
+    initial_value=1e3,
+    growth_factor=1.1,
     cutback_factor=0.9,
     target_nb_iterations=4,
 )
@@ -256,24 +310,4 @@ my_model.run()
 
 
 
-# Mission: Get my concentration back
-# first try not /avo ing the phi value
-# IM TAKING THE TRAPS AWAY AND SEEING IF IT STILL WORKS, returning /avo to phi
-# okay SO, with no trapping reactions, D_6 concentration shows as 2.2E-2 and a nice gradient all cool
-# ofc, trapped D_6 concentration shows as 1.2E-38 so basically 0 which is expected 
-# BUT that is the value I keep getting for EVERYTHING when I run it with trapping reactions.
-
-# Let's just put in the deuterium trap first...
-# That was such the right move it's insane.
-# SO with just the deuterium trapping reaction, get nice value of 2.2E-2 D mobile and 3.3E+2 trapped D--- that's really high but
-# it works okay
-
-# Now let's add the tritium trapping reaction....
-# I'm gonna do it this time--- so it seems I jsut set my tolerances so naffly that it didn't wanna compute anything
-# My trapped concentrations are still WEIRDLY HIGH but you know this could be an issue with the values I'm using
-# since they are practically made it.
-
-# WIth that issue sorted, I now set my intial value to 100 seconds to watch the concentrations develop
-# and with this, I got very FLASHY results i.e. it was flashing between zero and the gradient so it's still WRONG
-
-# Tolerances must be changed much more
+# BASBDHASBDN

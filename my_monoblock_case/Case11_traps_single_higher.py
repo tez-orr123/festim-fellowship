@@ -59,7 +59,7 @@ cucrzr = F.Material(
 
 
 # Define mesh from xdmf files
-mesh = F.MeshFromXDMF("SALOME_meshes/my_monoblock_mesh_domains.xdmf", "SALOME_meshes/my_monoblock_mesh_boundaries.xdmf")
+mesh = F.MeshFromXDMF("SALOME_meshes/monoblock_mesh_domains.xdmf", "SALOME_meshes/monoblock_mesh_boundaries.xdmf")
 
 mesh.mesh.geometry.x[:] *= 1e-3
 # -------------------------------------------------

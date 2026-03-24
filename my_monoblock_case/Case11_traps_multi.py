@@ -138,7 +138,7 @@ Deuterium = F.Species("D", subdomains=my_model.volume_subdomains)
 trapped_D = F.Species("D_trapped", mobile=False, subdomains=my_model.volume_subdomains)
 Tritium = F.Species("T", subdomains=my_model.volume_subdomains)
 trapped_T = F.Species("T_trapped", mobile=False, subdomains=my_model.volume_subdomains)
-w_density = 6.3e28 / avo
+w_density = 6.3e28 # NOT DIVIDED BY AVO HERE
 trap_density = (w_density * 0.00118)
 empty_traps = F.Species("empty_traps", mobile=False, subdomains=my_model.volume_subdomains)
 my_model.species = [Deuterium, trapped_D, Tritium, trapped_T, empty_traps]
@@ -296,3 +296,4 @@ else:
 
 # slow at first but did indeed run, just pyvista that didn't want
 # to run as there's no notebook package
+# get trapped D density of 0 in tungsten.... wrong...
