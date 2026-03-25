@@ -146,7 +146,7 @@ trapped_3H = F.Species(
 )
 
 W_density = 6.3e28 / avo
-empty_traps_density = (W_density * 0.003) / avo
+empty_traps_density = W_density * 0.00118
 empty_traps = F.ImplicitSpecies(n=empty_traps_density, others=[trapped_1H])
 
 my_model.species = [mobile_H, trapped_1H, trapped_2H, trapped_3H]
@@ -165,7 +165,7 @@ my_model.reactions = [
     F.Reaction(
         reactant=[mobile_H, empty_traps],
         product=[trapped_1H],
-        k_0=4.1e-7,
+        k_0=2.6413e-17,
         E_k=0.21,
         p_0=1e13,
         E_p=1.49,
@@ -174,8 +174,7 @@ my_model.reactions = [
     F.Reaction(
         reactant=[mobile_H, trapped_1H],
         product=[trapped_2H],
-        # k_0=2.6413e-17,
-        k_0=4.1e-7,
+        k_0=2.6413e-17,
         E_k=0.21,
         p_0=2 * 1e13,
         E_p=1.46,
@@ -184,8 +183,7 @@ my_model.reactions = [
     F.Reaction(
         reactant=[mobile_H, trapped_2H],
         product=[trapped_3H],
-        # k_0=2.6413e-17,
-        k_0=4.1e-7,
+        k_0=2.6413e-17,
         E_k=0.21,
         p_0=3 * 1e13,
         E_p=1.32,
@@ -208,7 +206,7 @@ my_model.temperature = heat_transfer_problem.u
 
 my_model.settings = F.Settings(
     transient=True,
-    atol=1e-18,
+    atol=1e-19,
     rtol=1e-10,
     final_time=3.2e7,
 )
@@ -222,11 +220,10 @@ my_model.settings.stepsize = F.Stepsize(
 
 my_model.exports = [
     F.VTXSpeciesExport(
-        filename=f"monoblock_exports/single_implicit_multi_occ/{spe.name}_{subdomain.id}.bp",
-        field=spe,
+        filename=f"monoblock_exports/single_implicit_multi_occ/tot_conc_{subdomain.id}.bp",
+        field=my_model.species,
         subdomain=subdomain,
-    )
-    for spe in my_model.species
+    )  # changed here so that the total concs in each subdomain are extracted as separate files
     for subdomain in my_model.volume_subdomains
 ]
 
