@@ -297,7 +297,7 @@ my_model.temperature = heat_transfer_problem.u
 # Settings
 my_model.settings = F.Settings(
     transient=True,
-    atol=1e-19,  # lower tolerance if we solving in zero iterations
+    atol=1e-18,  # lower tolerance if we solving in zero iterations
     rtol=1e-10,
     final_time=3.2e7,
 )
@@ -312,7 +312,7 @@ my_model.settings.stepsize = F.Stepsize(
 
 my_model.exports = [
     F.VTXSpeciesExport(
-        filename=f"monoblock_exports/multi_occupancy/{spe.name}_{subdomain.id}.bp",
+        filename=f"monoblock_exports/single_explicit_multi_occ/{spe.name}_{subdomain.id}.bp",
         field=spe,
         subdomain=subdomain,
     )
@@ -322,13 +322,6 @@ my_model.exports = [
 
 # Trying to export all three trap concentration in one file...
 # This has the concentrations in one file but not as a total value... how can I do that?
-my_model.exports = [
-    F.VTXSpeciesExport(
-        filename=f"monoblock_exports/multi_occupancy/total_trapped.bp",
-        field=[trapped_1H, trapped_2H, trapped_3H, empty_traps, mobile_H],
-        subdomain=W_volume,
-    )
-]
 
 
 # SHOW THAT LOG
