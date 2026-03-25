@@ -152,7 +152,7 @@ empty_traps = F.Species(
 my_model.species = [mobile_H, trapped_1H, trapped_2H, trapped_3H, empty_traps]
 
 W_density = 6.3e28 / avo
-empty_traps_density = W_density * 0.00118
+empty_traps_density = W_density * 0.003
 my_model.initial_conditions = [
     F.InitialConcentration(
         value=empty_traps_density, volume=W_volume, species=empty_traps
@@ -173,33 +173,33 @@ my_model.reactions = [
     F.Reaction(
         reactant=[mobile_H, empty_traps],
         product=[trapped_1H],
-        k_0=2.6413e-17,
+        k_0=1e-3,  # MAke super HIGH??
         E_k=0.21,
-        p_0=1.0e13,
-        E_p=1.0,
+        p_0=1.0e11,
+        E_p=1.49,
         volume=W_volume,
     ),
     F.Reaction(
         reactant=[mobile_H, trapped_1H],
         product=[trapped_2H],
-        k_0=2.6413e-17,
+        k_0=1e-3,
         E_k=0.21,
-        p_0=2 * 1e13,
+        p_0=2 * 1e11,
         E_p=1.46,
         volume=W_volume,
     ),
     F.Reaction(
         reactant=[mobile_H, trapped_2H],
         product=[trapped_3H],
-        k_0=2.6413e-17,
+        k_0=1e-3,
         E_k=0.21,
-        p_0=3 * 1e13,
-        E_p=1.32,
+        p_0=3 * 1e11,
+        E_p=1.39,
         volume=W_volume,
     ),
 ]
 
-phi = (0.23e24) / avo
+phi = (0.23e28) / avo
 R_p = 1.1e-9
 my_model.boundary_conditions = [
     F.FixedConcentrationBC(
@@ -214,7 +214,7 @@ my_model.temperature = heat_transfer_problem.u
 
 my_model.settings = F.Settings(
     transient=True,
-    atol=1e-19,
+    atol=1e-16,
     rtol=1e-10,
     final_time=3.2e7,
 )
@@ -228,7 +228,7 @@ my_model.settings.stepsize = F.Stepsize(
 
 my_model.exports = [
     F.VTXSpeciesExport(
-        filename=f"monoblock_exports/single_explicit_multi_occ/tot_conc_{subdomain.id}.bp",
+        filename=f"monoblock_exports/single_explicit_multi_occ/explicit_tot_conc_{subdomain.id}.bp",
         field=my_model.species,
         subdomain=subdomain,
     )
