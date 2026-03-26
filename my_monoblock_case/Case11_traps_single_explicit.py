@@ -223,6 +223,7 @@ my_model.settings.stepsize = F.Stepsize(
     growth_factor=1.1,
     cutback_factor=0.9,
     target_nb_iterations=4,
+    milestones=[100, 1000, 1E6, 1E7, 3.2E7],
 )
 
 
@@ -231,6 +232,7 @@ my_model.exports = [
         filename=f"monoblock_exports/single_explicit_multi_occ/explicit_tot_conc_{subdomain.id}.bp",
         field=my_model.species,
         subdomain=subdomain,
+        times=[100, 1000, 1E6, 1E7, 3.2E7],
     )
     for subdomain in my_model.volume_subdomains
 ]

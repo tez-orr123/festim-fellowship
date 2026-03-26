@@ -148,7 +148,8 @@ trapped_3H = F.Species(
 W_density = 6.3e28 / avo
 empty_traps_density = W_density * 0.003
 empty_traps = F.ImplicitSpecies(
-    n=empty_traps_density, others=[trapped_1H, trapped_2H, trapped_3H]
+    n=empty_traps_density, others=[trapped_1H] # if i remove trapped_2H and trapped_3H from the empty_traps others,
+     # will that stop the dependency of empty traps on them, to match to explicit route???
 )
 # DO I have to put trapped_2H and trapped_3H in others too so they can get trapping in em? LETS SEE
 my_model.species = [mobile_H, trapped_1H, trapped_2H, trapped_3H]
@@ -217,6 +218,7 @@ my_model.settings.stepsize = F.Stepsize(
     growth_factor=1.1,
     cutback_factor=0.9,
     target_nb_iterations=4,
+    milestones=[100, 1000, 1E6, 1E7, 3.2E7],
 )
 
 
@@ -225,6 +227,7 @@ my_model.exports = [
         filename=f"monoblock_exports/single_implicit_multi_occ/implicit_tot_conc_{subdomain.id}.bp",
         field=my_model.species,
         subdomain=subdomain,
+        times=[100, 1000, 1E6, 1E7, 3.2E7],
     )  # changed here so that the total concs in each subdomain are extracted as separate files
     for subdomain in my_model.volume_subdomains
 ]
@@ -234,5 +237,3 @@ set_log_level(LogLevel.INFO)
 
 my_model.initialise()
 my_model.run()
-
-print(W_D_0_H / avo)
