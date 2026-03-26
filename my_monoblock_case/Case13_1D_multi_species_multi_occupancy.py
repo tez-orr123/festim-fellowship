@@ -60,6 +60,8 @@
 
 import festim as F
 import numpy as np
+import ufl
+from dolfinx.log import LogLevel, set_log_level
 
 avo = 6.022e23
 W_D_0_D = 4.1e-7
@@ -176,17 +178,23 @@ my_model.method_interface = "penalty"
 # Subdomains
 my_model.subdomains = all_subdomains
 
-w_density = 6.3e28
-trap_density = (w_density * 0.00118) / avo
+my_model.surface_to_volume = {
+    plasma_facing_side: W_volume,
+    coolant_facing_side: CuCrZr_volume,
+}
+
+W_density = 6.3e28 / avo
+empty_traps_density = W_density * 0.003
 
 Deuterium = F.Species("D", subdomains=my_model.volume_subdomains)
+Tritium = F.Species("T", subdomains=my_model.volume_subdomains)
+
 trapped_1D = F.Species(
     "D_1_trapped", mobile=False, subdomains=my_model.volume_subdomains
 )
 trapped_2D = F.Species(
     "D_2_trapped", mobile=False, subdomains=my_model.volume_subdomains
 )
-Tritium = F.Species("T", subdomains=my_model.volume_subdomains)
 trapped_1T = F.Species(
     "T_1_trapped", mobile=False, subdomains=my_model.volume_subdomains
 )
@@ -200,6 +208,10 @@ trapped_DT = F.Species(
     "D_T_trapped", mobile=False, subdomains=my_model.volume_subdomains
 )
 
+empty_traps = F.ImplicitSpecies(
+    n=empty_traps_density, others=[trapped_1D, trapped_1T, trapped_2D, trapped_2T, trapped_DT]
+)
+
 my_model.species = [
     Deuterium,
     Tritium,
@@ -208,33 +220,9 @@ my_model.species = [
     trapped_1T,
     trapped_2T,
     trapped_DT,
-    empty_traps,
 ]
 
-my_model.initial_conditions = [
-    F.InitialConcentration(value=trap_density, volume=W_volume, species=empty_traps)
-]
-
-# Densities of traps:
-# Empty traps density will be density of trap 1 = metal_density * 0.01 * 6/21
-# we will have to divide these of old by avo
-# W_density = 6.3e28
-
-# empty_traps_density = (W_density * 0.01 * 6/6) / avo
-# trapped_1D_density =  (W_density * 0.01 * 12/6) /avo
-# trapped_2D_density = (W_density * 0.01 * 18/6) /avo
-# trapped_1T_density =  (W_density * 0.01 * 12/6) /avo
-# trapped_2T_density = (W_density * 0.01 * 18/6) /avo
-# trapped_DT_density =  (W_density * 0.01 * 12/6) /avo
-
-# Mesh
 my_model.mesh = shared_mesh
-
-
-my_model.surface_to_volume = {
-    plasma_facing_side: W_volume,
-    coolant_facing_side: CuCrZr_volume,
-}
 
 # Penalty #2
 penalty_term = 1e-5
@@ -245,96 +233,64 @@ my_model.interfaces = [
     ),
 ]
 
-# Trapping reactions
-# trap_1 = F.Trap(
-#     k_0 = 2.6413e-17,
-#     E_k = 0.21,
-#     p_0 = 1e13,
-#     E_p = 1.49,
-#     density = metal_density * 0.01 * 6/21,  #
-#     materials = [metal],
-# )
-#
-# trap_2 = F.Trap(
-#     k_0 = 2.6413e-17,
-#     E_k = 0.21,  # E_D
-#     p_0 = 1e13,  # attempt frequency
-#     E_p = 1.46,  # binding energy + migration energy
-#     density = metal_density * 0.01 * 12/21,
-#     materials = [metal],
-# )
-#
-# trap_3 = F.Trap(
-#     k_0 = 2.6413e-17,
-#     E_k = 0.21,  # E_D
-#     p_0 = 1e13,  # attempt frequency
-#     E_p = 1.32,  # binding energy + migration energy
-#     density = metal_density * 0.01 * 18/21,
-#     materials = [metal],
-# )
-lattice_length = 1.1e-10  # m
-n_solute_per_site = 6
 my_model.reactions = [
     F.Reaction(
         reactant=[Deuterium, empty_traps],
         product=[trapped_1D],
-        k_0=2.6413e-17,
+        k_0=1e-3,
         E_k=0.21,
-        p_0=1e13,
+        p_0=1e11,
         E_p=1.49,
         volume=W_volume,
     ),
     F.Reaction(
         reactant=[Deuterium, trapped_1D],
         product=[trapped_2D],
-        k_0=2.6413e-17,
+        k_0=1e-3,
         E_k=0.21,
-        p_0=1e13,
+        p_0=2 * 1e11,
         E_p=1.46,
         volume=W_volume,
     ),
     F.Reaction(
         reactant=[Tritium, empty_traps],
         product=[trapped_1T],
-        k_0=2.6413e-17,
+        k_0=1e-3,
         E_k=0.21,
-        p_0=1e13,
+        p_0=1e11,
         E_p=1.49,
         volume=W_volume,
     ),
     F.Reaction(
         reactant=[Tritium, trapped_1T],
         product=[trapped_2T],
-        k_0=2.6413e-17,
+        k_0=1e-3,
         E_k=0.21,
-        p_0=1e13,
+        p_0=2 * 1e11,
         E_p=1.46,
         volume=W_volume,
     ),
     F.Reaction(
         reactant=[Deuterium, trapped_1T],
         product=[trapped_DT],
-        k_0=2.6413e-17,
+        k_0=1e-3,
         E_k=0.21,
-        p_0=1e13,
+        p_0=2* 1e11,
         E_p=1.46,
         volume=W_volume,
     ),
     F.Reaction(
         reactant=[Tritium, trapped_1D],
         product=[trapped_DT],
-        k_0=2.6413e-17,
+        k_0=1e-3,
         E_k=0.21,
-        p_0=1e13,
+        p_0=2 * 1e11,
         E_p=1.46,
         volume=W_volume,
     ),
 ]
 
-# BCs
-import ufl
-
-phi = (0.23e24) / avo
+phi = (0.23e28) / avo
 R_p = 1.1e-9
 my_model.boundary_conditions = [
     F.FixedConcentrationBC(
@@ -351,13 +307,11 @@ my_model.boundary_conditions = [
     F.FixedConcentrationBC(subdomain=coolant_facing_side, value=0, species=Tritium),
 ]
 
-# Temperature field from heat transfer problem
 my_model.temperature = heat_transfer_problem.u
 
-# Settings
 my_model.settings = F.Settings(
     transient=True,
-    atol=1e-20,  # lower tolerance if we solving in zero iterations
+    atol=1e-26, 
     rtol=1e-10,
     final_time=3.2e7,
 )
@@ -366,33 +320,20 @@ my_model.settings.stepsize = F.Stepsize(
     growth_factor=1.1,
     cutback_factor=0.9,
     target_nb_iterations=4,
+    # milestones=[100, 1000, 1E6, 1E7, 3.2E7],
 )
 
-# Exports
+
+
 my_model.exports = [
     F.VTXSpeciesExport(
-        filename=f"monoblock_exports/multi_occupancy/{spe.name}_{subdomain.id}.bp",
-        field=spe,
+        filename=f"monoblock_exports/case13/multi_spe_implicit_multi_occ/implicit_tot_conc_{subdomain.id}.bp",
+        field=my_model.species,
         subdomain=subdomain,
-    )
-    for spe in my_model.species
+        #times=[100, 1000, 1E6, 1E7, 3.2E7],
+    )  
     for subdomain in my_model.volume_subdomains
 ]
-
-# Trying to export all three trap concentration in one file...
-# This has the concentrations in one file but not as a total value... how can I do that?
-total_trapped = [trapped_1D, trapped_2D, trapped_1T, trapped_2T, trapped_DT]
-my_model.exports = [
-    F.VTXSpeciesExport(
-        filename=f"monoblock_exports/multi_occupancy/multi_species/total_trapped.bp",
-        field=total_trapped,
-        subdomain=W_volume,
-    )
-]
-
-
-# SHOW THAT LOG
-from dolfinx.log import LogLevel, set_log_level
 
 # need
 set_log_level(LogLevel.INFO)
