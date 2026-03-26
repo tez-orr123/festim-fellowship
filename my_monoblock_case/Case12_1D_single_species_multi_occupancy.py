@@ -140,7 +140,7 @@ heat_transfer_problem.subdomains = all_subdomains
 
 heat_transfer_problem.mesh = shared_mesh
 
-PF_temp = F.FixedTemperatureBC(subdomain=plasma_facing_side, value=773)
+PF_temp = F.FixedTemperatureBC(subdomain=plasma_facing_side, value=1173)
 coolant_temp = F.FixedTemperatureBC(subdomain=coolant_facing_side, value=773)
 
 heat_transfer_problem.boundary_conditions = [PF_temp, coolant_temp]
@@ -190,19 +190,12 @@ my_model.species = [mobile_H, trapped_1H, trapped_2H, trapped_3H, empty_traps]
 # we will have to divide these of old by avo
 W_density = 6.3e28  # at.m-3
 
-empty_traps_density = (W_density * 0.01 * 6 / 6) / avo
-trapped_1H_density = (W_density * 0.01 * 12 / 6) / avo
-trapped_2H_density = (W_density * 0.01 * 18 / 6) / avo
+empty_traps_density = (W_density * 0.003) / avo
+
 my_model.initial_conditions = [
     F.InitialConcentration(
         value=empty_traps_density, volume=W_volume, species=empty_traps
     ),
-    # F.InitialConcentration(
-    #     value=trapped_1H_density, volume=W_volume, species=trapped_1H
-    # ),
-    # F.InitialConcentration(
-    #     value=trapped_2H_density, volume=W_volume, species=trapped_2H
-    # ),
 ]
 
 # Mesh
@@ -250,13 +243,13 @@ my_model.interfaces = [
 #     density = metal_density * 0.01 * 18/21,
 #     materials = [metal],
 # )
-lattice_length = 1.1e-10  # m
-n_solute_per_site = 6
+
 my_model.reactions = [
     F.Reaction(
         reactant=[mobile_H, empty_traps],
         product=[trapped_1H],
-        k_0=2.6413e-17,
+        # k_0=2.6413e-17,  # CHECK if this value is correct and what unts it is in. Cos right now it's saying it's real hard to get into a trap... WRONG
+        k_0=4.1e-7,
         E_k=0.21,
         p_0=1e13,
         E_p=1.49,
@@ -265,18 +258,20 @@ my_model.reactions = [
     F.Reaction(
         reactant=[mobile_H, trapped_1H],
         product=[trapped_2H],
-        k_0=2.6413e-17,
+        # k_0=2.6413e-17,
+        k_0=4.1e-7,
         E_k=0.21,
-        p_0=1e13,
+        p_0=2 * 1e13,
         E_p=1.46,
         volume=W_volume,
     ),
     F.Reaction(
         reactant=[mobile_H, trapped_2H],
         product=[trapped_3H],
-        k_0=2.6413e-17,
+        # k_0=2.6413e-17,
+        k_0=4.1e-7,
         E_k=0.21,
-        p_0=1e13,
+        p_0=3 * 1e13,
         E_p=1.32,
         volume=W_volume,
     ),
@@ -302,7 +297,7 @@ my_model.temperature = heat_transfer_problem.u
 # Settings
 my_model.settings = F.Settings(
     transient=True,
-    atol=1e-19,  # lower tolerance if we solving in zero iterations
+    atol=1e-18,  # lower tolerance if we solving in zero iterations
     rtol=1e-10,
     final_time=3.2e7,
 )
@@ -317,7 +312,7 @@ my_model.settings.stepsize = F.Stepsize(
 
 my_model.exports = [
     F.VTXSpeciesExport(
-        filename=f"monoblock_exports/multi_occupancy/{spe.name}_{subdomain.id}.bp",
+        filename=f"monoblock_exports/single_explicit_multi_occ/{spe.name}_{subdomain.id}.bp",
         field=spe,
         subdomain=subdomain,
     )
@@ -327,13 +322,6 @@ my_model.exports = [
 
 # Trying to export all three trap concentration in one file...
 # This has the concentrations in one file but not as a total value... how can I do that?
-my_model.exports = [
-    F.VTXSpeciesExport(
-        filename=f"monoblock_exports/multi_occupancy/total_trapped.bp",
-        field=[trapped_1H, trapped_2H, trapped_3H, empty_traps, mobile_H],
-        subdomain=W_volume,
-    )
-]
 
 
 # SHOW THAT LOG
