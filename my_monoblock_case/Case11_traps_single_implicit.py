@@ -209,7 +209,7 @@ my_model.temperature = heat_transfer_problem.u
 
 my_model.settings = F.Settings(
     transient=True,
-    atol=1e-16,
+    atol=1e-14,
     rtol=1e-10,
     final_time=3.2e7,
 )
