@@ -1,10 +1,12 @@
-# Case 1:
-# Set-up:
-# -	Continuous hydrogen transport problem
-# -	Transient, over a FPY
-# -	Single species
-# -	No traps
-# -	Constant temperature
+"""
+Case 1:
+Set-up:
+-	Continuous hydrogen transport problem
+-	Transient, over a FPY
+-	Single species
+-	No traps
+-	Constant temperature
+"""
 
 import festim as F
 from dolfinx.io import gmsh as gmshio
