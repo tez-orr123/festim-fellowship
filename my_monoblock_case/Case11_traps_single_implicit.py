@@ -148,10 +148,9 @@ trapped_3H = F.Species(
 W_density = 6.3e28 / avo
 empty_traps_density = W_density * 0.003
 empty_traps = F.ImplicitSpecies(
-    n=empty_traps_density, others=[trapped_1H] # if i remove trapped_2H and trapped_3H from the empty_traps others,
-     # will that stop the dependency of empty traps on them, to match to explicit route???
+    n=empty_traps_density, others=[trapped_1H, trapped_2H, trapped_3H]
 )
-# DO I have to put trapped_2H and trapped_3H in others too so they can get trapping in em? LETS SEE
+
 my_model.species = [mobile_H, trapped_1H, trapped_2H, trapped_3H]
 
 my_model.mesh = shared_mesh
@@ -163,7 +162,7 @@ my_model.interfaces = [
         id=16, subdomains=(Cu_volume, CuCrZr_volume), penalty_term=penalty_term
     ),
 ]
-print(W_D_0_H / avo)
+
 my_model.reactions = [
     F.Reaction(
         reactant=[mobile_H, empty_traps],
