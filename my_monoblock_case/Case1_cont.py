@@ -9,7 +9,7 @@ Set-up:
 """
 
 import festim as F
-from dolfinx.io import gmsh as gmshio
+import gmsh as gmshio
 from mpi4py import MPI
 
 avo = 6.022e23
