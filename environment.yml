@@ -1,10 +1,11 @@
-name: festim-fellowship
+name: festim-fellowship-env
 
 channels:
 - defaults
 - conda-forge
 
 dependencies:
+- python=3.11.8
 - festim
 - python-gmsh
 - pyvista
