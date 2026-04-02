@@ -19,7 +19,7 @@
 # method interface, subdomains, species, penalty term stuff, BCs, heat_transfer_problem.u for temperature, settings, run
 
 import festim as F
-from dolfinx.io import gmsh as gmshio
+import gmsh as gmshio
 from mpi4py import MPI
 
 # materials
@@ -38,7 +38,7 @@ Cu_D_0_T = 6.6e-7
 Cu_E_D_D = 0.377
 Cu_E_D_T = 0.387
 
-CuCrZr_D_0_D = 3.92e-7
+CuCrZr_D_0_D = 3.92e-7 
 CuCrZr_D_0_T = 3.92e-7
 
 CuCrZr_E_D_D = 0.408
@@ -77,9 +77,28 @@ cucrzr = F.Material(
 
 
 # Define mesh from xdmf files
-mesh = F.MeshFromXDMF("SALOME_meshes/my_monoblock_mesh_domains.xdmf", "SALOME_meshes/my_monoblock_mesh_boundaries.xdmf")
+#mesh = F.MeshFromXDMF("SALOME_meshes/my_monoblock_mesh_domains.xdmf", "SALOME_meshes/my_monoblock_mesh_boundaries.xdmf")
+mesh_data = gmshio.read_from_msh(
+    "SALOME_meshes/monoblock_refined_well_perhaps.msh", MPI.COMM_WORLD, 0, gdim=3
+)
+    # """
+    # Read from gmsh just aint working and i cant figure out why
+    
+    # """
+mesh = mesh_data.mesh
+assert mesh_data.facet_tags is not None
+facet_tags = mesh_data.facet_tags
+facet_tags.name = "Facet markers"
+
+assert mesh_data.cell_tags is not None
+cell_tags = mesh_data.cell_tags
+cell_tags.name = "Cell markers"
 # -------------------------------------------------
 
+shared_mesh = F.Mesh(mesh)
+
+shared_mesh_facet_tags = facet_tags
+shared_mesh_cell_tags = cell_tags
 
 
 
@@ -105,7 +124,10 @@ heat_transfer_problem = F.HeatTransferProblem()
 
 heat_transfer_problem.subdomains = all_subdomains
 
-heat_transfer_problem.mesh = mesh
+heat_transfer_problem.mesh = shared_mesh
+
+heat_transfer_problem.facet_meshtags = facet_tags
+heat_transfer_problem.volume_meshtags = cell_tags
 
 heat_flux_PF = F.FixedTemperatureBC(subdomain=top, value=1173)
 coolant_temp = F.FixedTemperatureBC(subdomain=coolant_face, value=773)
@@ -132,6 +154,14 @@ heat_transfer_problem.run()
 # H transport problem
 # method interface, subdomains, species, penalty term stuff, BCs, heat_transfer_problem.u for temperature, settings, run
 my_model = F.HydrogenTransportProblemDiscontinuous()
+
+my_model.mesh = shared_mesh
+
+my_model.facet_meshtags = facet_tags
+my_model.volume_meshtags = cell_tags
+
+my_model.facet_meshtags = facet_tags
+my_model.volume_meshtags = cell_tags
 
 my_model.method_interface = "penalty"
 
