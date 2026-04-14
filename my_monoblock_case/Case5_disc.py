@@ -7,48 +7,62 @@
 # -	Constant temperature
 
 import festim as F
-from dolfinx.io import gmsh as gmshio
+from dolfinx.io import XDMFFile, gmshio
 from mpi4py import MPI
 
 avo = 6.022e23
 
-#"\\wsl.localhost\Ubuntu\home\tezorr\repos\tez\FESTIM_2torial\my_monoblock_Htransport.py"
-#"\\wsl.localhost\Ubuntu\home\tezorr\repos\tez\gmsh_files\testing_DIVMON.msh"
-mesh_data = gmshio.read_from_msh(
-    "gmsh_files/testing_DIVMON.msh", MPI.COMM_WORLD, 0, gdim=3
+mesh, cell_tags, facet_tags = gmshio.read_from_msh(
+    "SALOME_meshes/main_monoblock_mesh.msh", MPI.COMM_WORLD, 0, gdim=3
 )
-mesh = mesh_data.mesh
-assert mesh_data.facet_tags is not None
-facet_tags = mesh_data.facet_tags
-facet_tags.name = "Facet markers"
 
-assert mesh_data.cell_tags is not None
-cell_tags = mesh_data.cell_tags
-cell_tags.name = "Cell markers"
+mesh.geometry.x[:] *= 1e-3
+
+assert facet_tags is not None
+assert cell_tags is not None
+
+facet_tags.name = "Facet Markers"
+cell_tags.name = "Cell Markers"
+
+shared_mesh = F.Mesh(mesh)
+shared_mesh_facet_tags = facet_tags
+shared_mesh_cell_tags = cell_tags
 
 my_model = F.HydrogenTransportProblemDiscontinuous()
 # ----------------
 # Define materials
 #-----------------
+W_D_0_H = 4.1e-7
+
+W_E_D_H = 0.38
+
+Cu_D_0_H = 6.6e-7
+
+Cu_E_D_H= 0.377
+
+CuCrZr_D_0_H = 3.92e-7
+
+CuCrZr_E_D_H = 0.408
+
 tungsten = F.Material(
-    D_0=1.5e-7,
-    E_D=0.265,
+    D_0=W_D_0_H,
+    E_D=W_E_D_H,
     K_S_0=2.7e24/avo,
     E_K_S=1.14,
     thermal_conductivity=173,
 )
 
 copper = F.Material(
-    D_0=6.6e-7,
-    E_D=0.387,
+    D_0=Cu_D_0_H,
+    E_D=Cu_E_D_H,
     K_S_0=3.14e24/avo,
     E_K_S=0.572,
     thermal_conductivity=350,
 )
 
 cucrzr = F.Material(
-    D_0=4.8e-7, 
-    E_D=0.42, 
+    D_0=CuCrZr_D_0_H, 
+    E_D=CuCrZr_E_D_H, 
     K_S_0=4.27e23/avo, 
     E_K_S=0.39, 
     thermal_conductivity=320
@@ -62,22 +76,18 @@ my_model.mesh = F.Mesh(mesh)
 my_model.facet_meshtags = facet_tags
 my_model.volume_meshtags = cell_tags
 
-# model_mesh.mesh.geometry.x[:] *= 1e-3 # converts mm to m 
-# # maybe helpful in the future but not really right now
+W_volume = F.VolumeSubdomain(id=1, material=tungsten)
+Cu_volume = F.VolumeSubdomain(id=2, material=copper)
+CuCrZr_volume = F.VolumeSubdomain(id=3, material=cucrzr)
 
-W_volume = F.VolumeSubdomain(id=227, material=tungsten)
-Cu_volume = F.VolumeSubdomain(id=228, material=copper)
-CuCrZr_volume = F.VolumeSubdomain(id=229, material=cucrzr)
-
-top = F.SurfaceSubdomain(id=230,)
-bottom = F.SurfaceSubdomain(id=232,)
-W_sides = F.SurfaceSubdomain(id=231,)
-Cu_sides = F.SurfaceSubdomain(id=236,)
-CuCrZr_sides = F.SurfaceSubdomain(id=237,)
-W_Cu_interlayer = F.SurfaceSubdomain(id=233,)
-Cu_CuCrZr_interlayer = F.SurfaceSubdomain(id=234,)
-coolant_face = F.SurfaceSubdomain(id=235,)
-# They didn't even define the interfaces in the example yet so we won't
+top = F.SurfaceSubdomain(id=4,)
+bottom = F.SurfaceSubdomain(id=6,)
+W_sides = F.SurfaceSubdomain(id=5,)
+Cu_sides = F.SurfaceSubdomain(id=7,)
+CuCrZr_sides = F.SurfaceSubdomain(id=8,)
+W_Cu_interlayer = F.SurfaceSubdomain(id=11,)
+Cu_CuCrZr_interlayer = F.SurfaceSubdomain(id=12,)
+coolant_face = F.SurfaceSubdomain(id=10,)
 
 all_subdomains = [top, bottom, W_sides, Cu_sides, CuCrZr_sides, W_Cu_interlayer, Cu_CuCrZr_interlayer, coolant_face, W_volume, Cu_volume, CuCrZr_volume]
 
@@ -101,12 +111,12 @@ my_model.surface_to_volume = {
     bottom: W_volume
 }
 
-penalty_term = 1e18
+penalty_term = 1e-5
 my_model.interfaces = [
     F.Interface(
-        id=233, subdomains=(W_volume, Cu_volume), penalty_term=penalty_term
+        id=11, subdomains=(W_volume, Cu_volume), penalty_term=penalty_term
         ),
-    F.Interface(id=234, subdomains=(Cu_volume, CuCrZr_volume), penalty_term=penalty_term)
+    F.Interface(id=12, subdomains=(Cu_volume, CuCrZr_volume), penalty_term=penalty_term)
 ]
 
 import ufl
@@ -119,9 +129,7 @@ my_model.boundary_conditions = [F.FixedConcentrationBC(
 F.FixedConcentrationBC(subdomain=coolant_face, value=0, species=H),
 ]
 
-
-# shouldn't have to define this now right?
-my_model.temperature = 1000
+my_model.temperature = 700
 
 my_model.settings = F.Settings(
     transient=True,
@@ -135,6 +143,11 @@ my_model.settings.stepsize = F.Stepsize(
     cutback_factor=0.9,
     target_nb_iterations=4,
 )
+
+# SHOW THAT LOG
+from dolfinx.log import LogLevel, set_log_level
+# need
+set_log_level(LogLevel.INFO)
 
 my_model.initialise()
 my_model.run()
