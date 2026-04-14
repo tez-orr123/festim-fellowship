@@ -1,13 +1,17 @@
-name: festim-fellowship-env
+name: new-festim-environment
 
 channels:
 - defaults
 - conda-forge
 
 dependencies:
-- python=3.11.8
 - festim
+- gmsh
 - python-gmsh
 - pyvista
 - numpy
+- mpi4py
+- MPI
+
+
 # - ipykernel   # if you run notebooks you'll probably need this

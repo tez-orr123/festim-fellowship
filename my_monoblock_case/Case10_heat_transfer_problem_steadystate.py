@@ -17,10 +17,41 @@
 # heat transfer problem, subdomains, mesh, BCs, exports, settings, run - done
 # then H transport problem discontinuous
 # method interface, subdomains, species, penalty term stuff, BCs, heat_transfer_problem.u for temperature, settings, run
-
-import festim as F
-import gmsh as gmshio
 from mpi4py import MPI
+from dolfinx.io import XDMFFile, gmshio
+
+try:
+    import gmsh
+except ImportError:
+    print("This demo requires gmsh to be installed")
+    exit(0)
+
+    """GOT IT TO RUN but it is diverging instantly lolllll
+    """
+import festim as F
+# Make sure gmsh comes from dolfinx and not just plain import gmsh it won't work
+from dolfinx.io import gmshio
+from mpi4py import MPI
+
+import typing
+import gmsh
+from collections.abc import Callable
+from pathlib import Path
+
+from mpi4py import MPI as _MPI
+
+import numpy as np
+import numpy.typing as npt
+
+import basix
+import basix.ufl
+import ufl
+from dolfinx import cpp as _cpp
+from dolfinx import default_real_type
+from dolfinx.cpp.graph import AdjacencyList_int32 as _AdjacencyList_int32
+
+from dolfinx.io.utils import distribute_entity_data
+from dolfinx.mesh import CellType, Mesh, MeshTags, create_mesh, meshtags_from_entities
 
 # materials
 avo = 6.022e23
@@ -78,43 +109,42 @@ cucrzr = F.Material(
 
 # Define mesh from xdmf files
 #mesh = F.MeshFromXDMF("SALOME_meshes/my_monoblock_mesh_domains.xdmf", "SALOME_meshes/my_monoblock_mesh_boundaries.xdmf")
-mesh_data = gmshio.read_from_msh(
+mesh, cell_tags, facet_tags = gmshio.read_from_msh(
     "SALOME_meshes/monoblock_refined_well_perhaps.msh", MPI.COMM_WORLD, 0, gdim=3
 )
-    # """
-    # Read from gmsh just aint working and i cant figure out why
-    
-    # """
-mesh = mesh_data.mesh
-assert mesh_data.facet_tags is not None
-facet_tags = mesh_data.facet_tags
-facet_tags.name = "Facet markers"
+# Fixed so that mesh can now be read and assigned mesh, facet and cell tags correctly. 
+mesh.geometry.x[:] *= 1e-3
 
-assert mesh_data.cell_tags is not None
-cell_tags = mesh_data.cell_tags
-cell_tags.name = "Cell markers"
-# -------------------------------------------------
+print(mesh)
+print(cell_tags)
+
+assert facet_tags is not None
+assert cell_tags is not None
+
+facet_tags.name = "Facet Markers"
+cell_tags.name = "Cell Markers"
 
 shared_mesh = F.Mesh(mesh)
-
 shared_mesh_facet_tags = facet_tags
 shared_mesh_cell_tags = cell_tags
 
 
 
-# Subdomains 
-W_volume = F.VolumeSubdomain(id=6, material=tungsten)
-Cu_volume = F.VolumeSubdomain(id=7, material=copper)
-CuCrZr_volume = F.VolumeSubdomain(id=8, material=cucrzr)
 
-top = F.SurfaceSubdomain(id=9,)
-bottom = F.SurfaceSubdomain(id=11,)
-W_sides = F.SurfaceSubdomain(id=10,)
-Cu_sides = F.SurfaceSubdomain(id=12,)
-CuCrZr_sides = F.SurfaceSubdomain(id=13,)
-W_Cu_interlayer = F.SurfaceSubdomain(id=15,)
-Cu_CuCrZr_interlayer = F.SurfaceSubdomain(id=16,)
-coolant_face = F.SurfaceSubdomain(id=14,)
+
+# Subdomains 
+W_volume = F.VolumeSubdomain(id=1, material=tungsten)
+Cu_volume = F.VolumeSubdomain(id=2, material=copper)
+CuCrZr_volume = F.VolumeSubdomain(id=3, material=cucrzr)
+
+top = F.SurfaceSubdomain(id=4,)
+bottom = F.SurfaceSubdomain(id=6,)
+W_sides = F.SurfaceSubdomain(id=5,)
+Cu_sides = F.SurfaceSubdomain(id=7,)
+CuCrZr_sides = F.SurfaceSubdomain(id=8,)
+W_Cu_interlayer = F.SurfaceSubdomain(id=11,)
+Cu_CuCrZr_interlayer = F.SurfaceSubdomain(id=12,)
+coolant_face = F.SurfaceSubdomain(id=10,)
 
 all_subdomains = [top, bottom, W_sides, Cu_sides, CuCrZr_sides, W_Cu_interlayer, Cu_CuCrZr_interlayer, coolant_face, W_volume, Cu_volume, CuCrZr_volume]
 # ----------------------------------------------------------
@@ -171,8 +201,6 @@ Deuterium = F.Species("D", subdomains=my_model.volume_subdomains)
 Tritium = F.Species("T", subdomains=my_model.volume_subdomains)
 my_model.species = [Deuterium, Tritium]
 
-my_model.mesh = mesh
-
 my_model.surface_to_volume = {
     top: W_volume,
     coolant_face: CuCrZr_volume,
@@ -185,9 +213,9 @@ my_model.surface_to_volume = {
 penalty_term = 1e-5 # Go up when struggling
 my_model.interfaces = [
     F.Interface(
-        id=15, subdomains=(W_volume, Cu_volume), penalty_term=penalty_term
+        id=11, subdomains=(W_volume, Cu_volume), penalty_term=penalty_term
         ),
-    F.Interface(id=16, subdomains=(Cu_volume, CuCrZr_volume), penalty_term=penalty_term)
+    F.Interface(id=12, subdomains=(Cu_volume, CuCrZr_volume), penalty_term=penalty_term)
 ]
 
 import ufl
@@ -221,7 +249,7 @@ my_model.temperature = heat_transfer_problem.u # Should take the temperature fro
 # Steady-state for now
 my_model.settings = F.Settings(
     transient=False,
-    atol=1e-10,
+    atol=1e1,
     rtol=1e-10,
     #final_time=3.2e7,
 )
